@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "sam.com.beaconsclientapp"
-        minSdkVersion 15
+        minSdkVersion 18
         targetSdkVersion 20
         versionCode 1
         versionName "1.0"
@@ -19,6 +19,14 @@ android {
     }
 }
 
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs 'libs'
+    }
+}
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'org.altbeacon:android-beacon-library:2+@aar'
 }
