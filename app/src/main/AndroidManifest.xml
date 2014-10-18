@@ -2,10 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="sam.com.beaconsclientapp">
 
-    <application>
-        <activity android:name="sam.com.beaconsclientapp.MainActivity"
+    <application
+        android:name="sam.com.beaconsclientapp.BeaconClientApplication"
+        android:allowBackup="true">
+        <activity
+            android:name="sam.com.beaconsclientapp.MainActivity"
             android:label="@string/title_activity_main"
-            >
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

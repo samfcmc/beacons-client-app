@@ -26,6 +26,7 @@ import org.altbeacon.beacon.startup.BootstrapNotifier;
 
 import java.util.Collection;
 
+import sam.com.beaconsclientapp.bluetooth.IBeaconManager;
 import sam.com.beaconsclientapp.bluetooth.IBeaconParser;
 
 
@@ -42,8 +43,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
-        this.beaconManager = BeaconManager.getInstanceForApplication(this);
-        this.beaconManager.getBeaconParsers().add(new IBeaconParser());
+        this.beaconManager = IBeaconManager.getInstance(this);
         this.beaconManager.bind(this);
     }
 
@@ -74,22 +74,6 @@ public class MainActivity extends Activity implements BeaconConsumer {
 
     @Override
     public void onBeaconServiceConnect() {
-       /*this.beaconManager.setMonitorNotifier(new MonitorNotifier() {
-           @Override
-           public void didEnterRegion(Region region) {
-               Toast.makeText(MainActivity.this, "Enter region " + region.getUniqueId(), Toast.LENGTH_SHORT).show();
-           }
-
-           @Override
-           public void didExitRegion(Region region) {
-               Toast.makeText(MainActivity.this, "Exit region " + region.getUniqueId(), Toast.LENGTH_SHORT).show();
-           }
-
-           @Override
-           public void didDetermineStateForRegion(int i, Region region) {
-               Toast.makeText(MainActivity.this, "State for region " + region.getUniqueId(), Toast.LENGTH_SHORT).show();
-           }
-       });*/
         this.beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
@@ -103,8 +87,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
         });
 
         try {
-            //this.beaconManager.startMonitoringBeaconsInRegion(new Region("myMonitoringUniqueId", null, null, null));
-            this.beaconManager.startRangingBeaconsInRegion(new Region("testRegion", null, null, null));
+            this.beaconManager.startRangingBeaconsInRegion(new Region("myRegion", null, null, null));
         } catch (RemoteException e) {
             Toast.makeText(this, "Remote Exception", Toast.LENGTH_SHORT).show();
         }
