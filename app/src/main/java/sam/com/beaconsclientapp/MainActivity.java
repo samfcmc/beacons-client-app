@@ -5,6 +5,8 @@ import android.app.ActionBar;
 import android.app.Fragment;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
@@ -28,11 +30,15 @@ import java.util.Collection;
 
 import sam.com.beaconsclientapp.bluetooth.IBeaconManager;
 import sam.com.beaconsclientapp.bluetooth.IBeaconParser;
+import sam.com.beaconsclientapp.webstorage.WebStorageCallback;
+import sam.com.beaconsclientapp.webstorage.entities.BeaconEntity;
 
 
 public class MainActivity extends Activity implements BeaconConsumer {
 
+    private BeaconClientApplication application;
     private BeaconManager beaconManager;
+    private Region region;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +49,37 @@ public class MainActivity extends Activity implements BeaconConsumer {
                     .add(R.id.container, new PlaceholderFragment())
                     .commit();
         }
+        this.application = (BeaconClientApplication) getApplication();
         this.beaconManager = IBeaconManager.getInstance(this);
-        this.beaconManager.bind(this);
+        this.region = new Region("myRegion", null, null, null);
+
+        this.application.getClientWebStorage().init(new WebStorageCallback<Void>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                Toast.makeText(MainActivity.this, "Login failded", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onSuccess(Void response) {
+                MainActivity.this.beaconManager.bind(MainActivity.this);
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(this.beaconManager.isBound(this)) {
+            this.beaconManager.setBackgroundMode(false);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(this.beaconManager.isBound(this)) {
+            this.beaconManager.setBackgroundMode(true);
+        }
     }
 
     @Override
@@ -72,24 +107,22 @@ public class MainActivity extends Activity implements BeaconConsumer {
         return super.onOptionsItemSelected(item);
     }
 
+
+
     @Override
     public void onBeaconServiceConnect() {
         this.beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "Found beacons", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                if(beacons.size() > 0) {
+                    showContentToUser(beacons);
+                }
             }
         });
-
         try {
-            this.beaconManager.startRangingBeaconsInRegion(new Region("myRegion", null, null, null));
+            this.beaconManager.startRangingBeaconsInRegion(this.region);
         } catch (RemoteException e) {
-            Toast.makeText(this, "Remote Exception", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Remote exception", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -107,5 +140,58 @@ public class MainActivity extends Activity implements BeaconConsumer {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             return rootView;
         }
+    }
+
+    private Beacon getNearestBeacon(Collection<Beacon> beacons) {
+        Beacon nearestBeacon = beacons.iterator().next();
+
+        for(Beacon beacon : beacons) {
+            if(beacon.getDistance() < nearestBeacon.getDistance()) {
+                nearestBeacon = beacon;
+            }
+        }
+
+        return nearestBeacon;
+    }
+
+    private void showContentToUser(Collection<Beacon> beacons) {
+        Beacon beacon = getNearestBeacon(beacons);
+
+        try {
+            this.beaconManager.stopRangingBeaconsInRegion(this.region);
+        } catch (RemoteException e) {
+
+        }
+
+        this.application.getClientWebStorage().getBeacon(beacon, new WebStorageCallback<BeaconEntity>() {
+            @Override
+            public void onFailure(Throwable throwable) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Error ocurred", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onSuccess(final BeaconEntity response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(response != null) {
+                            openBrowserActivity(response.getContent());
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    private void openBrowserActivity(String url) {
+        Intent intent = new Intent(this, ShowContentActivity.class);
+
+        intent.putExtra("url", url);
+        startActivity(intent);
     }
 }
