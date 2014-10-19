@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.WebView;
 
 
@@ -14,11 +16,18 @@ public class ShowContentActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setAsFullscreenActivity();
         setContentView(R.layout.activity_show_content);
+
         this.webView = (WebView) findViewById(R.id.show_content_content_webview);
         String url = getIntent().getStringExtra("url");
 
         openBrowser(url);
+    }
+
+    private void setAsFullscreenActivity() {
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
     private void openBrowser(String url) {
