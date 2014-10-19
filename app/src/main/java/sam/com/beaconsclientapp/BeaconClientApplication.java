@@ -2,23 +2,18 @@ package sam.com.beaconsclientapp;
 
 import android.app.Application;
 import android.content.Intent;
-import android.os.RemoteException;
-import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
-import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
 import org.altbeacon.beacon.powersave.BackgroundPowerSaver;
 import org.altbeacon.beacon.startup.BootstrapNotifier;
 import org.altbeacon.beacon.startup.RegionBootstrap;
 
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
-import sam.com.beaconsclientapp.bluetooth.IBeaconManager;
 import sam.com.beaconsclientapp.webstorage.ClientWebStorage;
 import sam.com.beaconsclientapp.webstorage.KinveyClientWebStorage;
-import sam.com.beaconsclientapp.webstorage.WebStorageCallback;
 
 /**
  *
@@ -30,16 +25,36 @@ public class BeaconClientApplication extends Application implements BootstrapNot
     private ClientWebStorage clientWebStorage;
     private boolean detectedBeaconsSinceBoot = false;
     private BackgroundPowerSaver backgroundPowerSaver;
+    private Map<String, Beacon> alreadyDetectedBeacons;
 
     @Override
 
     public void onCreate() {
         super.onCreate();
+        this.alreadyDetectedBeacons = new HashMap<String, Beacon>();
         this.region = new Region("backgroundRegion", null, null, null);
         this.regionBootstrap = new RegionBootstrap(this, region);
         this.backgroundPowerSaver = new BackgroundPowerSaver(this);
 
         this.clientWebStorage = new KinveyClientWebStorage(this);
+    }
+
+    public void addDetectedBeacon(Beacon beacon) {
+        String id = getBeaconCompleteId(beacon);
+        this.alreadyDetectedBeacons.put(id, beacon);
+    }
+
+    public String getBeaconCompleteId(Beacon beacon) {
+        return beacon.getId1().toHexString() + beacon.getId2().toHexString() + beacon.getId3().toHexString();
+    }
+
+    public boolean beaconWasAlreadyDetected(Beacon beacon) {
+        String id = getBeaconCompleteId(beacon);
+        return this.alreadyDetectedBeacons.containsKey(id);
+    }
+
+    public void resetAlreadyDetectedBeacons() {
+        this.alreadyDetectedBeacons.clear();
     }
 
     public ClientWebStorage getClientWebStorage() {

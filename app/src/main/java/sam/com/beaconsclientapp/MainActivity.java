@@ -1,35 +1,32 @@
 package sam.com.beaconsclientapp;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.Fragment;
-import android.bluetooth.BluetoothDevice;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.RemoteException;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
 import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
 import org.altbeacon.beacon.BeaconManager;
-import org.altbeacon.beacon.BeaconParser;
-import org.altbeacon.beacon.MonitorNotifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
-import org.altbeacon.beacon.startup.BootstrapNotifier;
 
 import java.util.Collection;
 
 import sam.com.beaconsclientapp.bluetooth.IBeaconManager;
-import sam.com.beaconsclientapp.bluetooth.IBeaconParser;
 import sam.com.beaconsclientapp.webstorage.WebStorageCallback;
 import sam.com.beaconsclientapp.webstorage.entities.BeaconEntity;
 
@@ -39,6 +36,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
     private BeaconClientApplication application;
     private BeaconManager beaconManager;
     private Region region;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +50,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
         this.application = (BeaconClientApplication) getApplication();
         this.beaconManager = IBeaconManager.getInstance(this);
         this.region = new Region("myRegion", null, null, null);
+        this.handler = new Handler();
 
         this.application.getClientWebStorage().init(new WebStorageCallback<Void>() {
             @Override
@@ -62,6 +61,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
             @Override
             public void onSuccess(Void response) {
                 MainActivity.this.beaconManager.bind(MainActivity.this);
+                initResetDetectedBeaconsTimer();
             }
         });
     }
@@ -115,7 +115,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
                 if(beacons.size() > 0) {
-                    showContentToUser(beacons);
+                    onBeaconsDetected(beacons);
                 }
             }
         });
@@ -154,13 +154,15 @@ public class MainActivity extends Activity implements BeaconConsumer {
         return nearestBeacon;
     }
 
-    private void showContentToUser(Collection<Beacon> beacons) {
-        Beacon beacon = getNearestBeacon(beacons);
-
+    private void onBeaconsDetected(Collection<Beacon> beacons) {
         try {
             this.beaconManager.stopRangingBeaconsInRegion(this.region);
         } catch (RemoteException e) {
+        }
+        final Beacon beacon = getNearestBeacon(beacons);
 
+        if(this.application.beaconWasAlreadyDetected(beacon)) {
+            return;
         }
 
         this.application.getClientWebStorage().getBeacon(beacon, new WebStorageCallback<BeaconEntity>() {
@@ -169,23 +171,44 @@ public class MainActivity extends Activity implements BeaconConsumer {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this, "Error ocurred", Toast.LENGTH_SHORT).show();
+                        logToDisplay("Error ocurred");
+
                     }
                 });
             }
 
             @Override
             public void onSuccess(final BeaconEntity response) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if(response != null) {
-                            openBrowserActivity(response.getContent());
-                        }
-                    }
-                });
+                if(response != null) {
+                    //openBrowserActivity(response.getContent());
+                    MainActivity.this.application.addDetectedBeacon(beacon);
+                    showNotification(response);
+                }
             }
         });
+        restartRanging();
+    }
+
+    private void initResetDetectedBeaconsTimer() {
+        /*this.handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                MainActivity.this.application.resetAlreadyDetectedBeacons();
+                MainActivity.this.handler.postDelayed(this, 5000);
+            }
+        }, 5000);*/
+    }
+
+    private void logToDisplay(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void restartRanging() {
+        try {
+            this.beaconManager.startRangingBeaconsInRegion(this.region);
+        } catch (RemoteException e) {
+
+        }
     }
 
     private void openBrowserActivity(String url) {
@@ -193,5 +216,29 @@ public class MainActivity extends Activity implements BeaconConsumer {
 
         intent.putExtra("url", url);
         startActivity(intent);
+    }
+
+    private void showNotification(BeaconEntity beacon) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        builder.setSmallIcon(android.R.drawable.stat_notify_chat);
+        builder.setContentTitle(beacon.getName());
+        builder.setContentText("Awesome stuff for you!");
+        builder.setAutoCancel(true);
+        long vibration[] = {0, 500, 200, 500, 200, 500};
+        builder.setVibrate(vibration);
+
+        Intent intent = new Intent(this, ShowContentActivity.class);
+        intent.putExtra("url", beacon.getContent());
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addParentStack(ShowContentActivity.class);
+        stackBuilder.addNextIntent(intent);
+
+        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(resultPendingIntent);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(0xFF, builder.build());
     }
 }
