@@ -180,12 +180,11 @@ public class MainActivity extends Activity implements BeaconConsumer {
             @Override
             public void onSuccess(final BeaconEntity response) {
                 if(response != null) {
-                    //openBrowserActivity(response.getContent());
-                    MainActivity.this.application.addDetectedBeacon(beacon);
                     showNotification(response);
                 }
             }
         });
+        MainActivity.this.application.addDetectedBeacon(beacon);
         restartRanging();
     }
 

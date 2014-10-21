@@ -66,7 +66,8 @@ public class KinveyClientWebStorage implements ClientWebStorage {
     @Override
     public void getBeacon(Beacon beacon, final WebStorageCallback<BeaconEntity> callback) {
         Query query = new Query();
-        //query.equals(UUID, beacon.getId1().toHexString());
+        String uuid = beacon.getId1().toHexString();
+        query.equals(UUID, uuid);
         AsyncAppData<BeaconEntity> appData = this.client.appData(COLLECTION_NAME, BeaconEntity.class);
 
         appData.get(query, new KinveyListCallback<BeaconEntity>() {

@@ -7,6 +7,7 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 
 public class ShowContentActivity extends Activity {
@@ -38,6 +39,8 @@ public class ShowContentActivity extends Activity {
         if(!trimUrl.startsWith("http")) {
             finalUrl = "http://" + trimUrl;
         }
+
+        this.webView.setWebViewClient(new WebViewClient());
 
         this.webView.loadUrl(finalUrl);
     }
