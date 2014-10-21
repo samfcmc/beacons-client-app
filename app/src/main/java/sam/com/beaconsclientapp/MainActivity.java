@@ -223,7 +223,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
 
         builder.setSmallIcon(android.R.drawable.stat_notify_chat);
         builder.setContentTitle(beacon.getName());
-        builder.setContentText("Awesome stuff for you!");
+        builder.setContentText(beacon.getDescription());
         builder.setAutoCancel(true);
         long vibration[] = {0, 500, 200, 500, 200, 500};
         builder.setVibrate(vibration);

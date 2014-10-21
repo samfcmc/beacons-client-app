@@ -26,6 +26,9 @@ public class BeaconEntity extends GenericJson {
     @Key
     private String content;
 
+    @Key
+    private String description;
+
     public BeaconEntity() {
     }
 
@@ -71,5 +74,13 @@ public class BeaconEntity extends GenericJson {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
