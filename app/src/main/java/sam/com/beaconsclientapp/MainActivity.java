@@ -182,7 +182,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
                     @Override
                     public void run() {
                         logToDisplay("Error ocurred");
-
+                        MainActivity.this.application.resetAlreadyDetectedBeacons();
                     }
                 });
             }
