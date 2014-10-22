@@ -2,6 +2,7 @@ package sam.com.beaconsclientapp;
 
 import android.app.Application;
 import android.content.Intent;
+import android.widget.Toast;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.Region;
@@ -63,7 +64,7 @@ public class BeaconClientApplication extends Application implements BootstrapNot
 
     @Override
     public void didEnterRegion(Region region) {
-        if(!this.detectedBeaconsSinceBoot) {
+        /*if(!this.detectedBeaconsSinceBoot) {
             Intent intent = new Intent(this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
@@ -71,7 +72,7 @@ public class BeaconClientApplication extends Application implements BootstrapNot
         }
         else {
 
-        }
+        }*/
 
     }
 
@@ -83,6 +84,10 @@ public class BeaconClientApplication extends Application implements BootstrapNot
     @Override
     public void didDetermineStateForRegion(int i, Region region) {
         //Don't care
+    }
+
+    private void logToDisplay(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
 }

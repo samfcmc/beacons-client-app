@@ -13,6 +13,7 @@ import android.webkit.WebViewClient;
 public class ShowContentActivity extends Activity {
 
     private WebView webView;
+    private BeaconClientApplication application;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +21,7 @@ public class ShowContentActivity extends Activity {
         setAsFullscreenActivity();
         setContentView(R.layout.activity_show_content);
 
+        this.application = (BeaconClientApplication) getApplication();
         this.webView = (WebView) findViewById(R.id.show_content_content_webview);
         String url = getIntent().getStringExtra("url");
 

@@ -33,6 +33,7 @@ import sam.com.beaconsclientapp.webstorage.entities.BeaconEntity;
 
 public class MainActivity extends Activity implements BeaconConsumer {
 
+    private static final long FOREGROUND_BETWEEN_SCAN_PERIOD = 5000;
     private BeaconClientApplication application;
     private BeaconManager beaconManager;
     private Region region;
@@ -61,7 +62,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
             @Override
             public void onSuccess(Void response) {
                 MainActivity.this.beaconManager.bind(MainActivity.this);
-                initResetDetectedBeaconsTimer();
+                //initResetDetectedBeaconsTimer();
             }
         });
     }
@@ -111,6 +112,9 @@ public class MainActivity extends Activity implements BeaconConsumer {
 
     @Override
     public void onBeaconServiceConnect() {
+        this.beaconManager.setForegroundBetweenScanPeriod(FOREGROUND_BETWEEN_SCAN_PERIOD);
+        this.beaconManager.setBackgroundBetweenScanPeriod(FOREGROUND_BETWEEN_SCAN_PERIOD);
+
         this.beaconManager.setRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
@@ -155,15 +159,21 @@ public class MainActivity extends Activity implements BeaconConsumer {
     }
 
     private void onBeaconsDetected(Collection<Beacon> beacons) {
-        try {
-            this.beaconManager.stopRangingBeaconsInRegion(this.region);
-        } catch (RemoteException e) {
-        }
+
         final Beacon beacon = getNearestBeacon(beacons);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                logToDisplay("Beacon detected");
+            }
+        });
 
         if(this.application.beaconWasAlreadyDetected(beacon)) {
             return;
         }
+
+        this.application.addDetectedBeacon(beacon);
 
         this.application.getClientWebStorage().getBeacon(beacon, new WebStorageCallback<BeaconEntity>() {
             @Override
@@ -184,18 +194,25 @@ public class MainActivity extends Activity implements BeaconConsumer {
                 }
             }
         });
-        MainActivity.this.application.addDetectedBeacon(beacon);
+        //this.application.addDetectedBeacon(beacon);
         restartRanging();
     }
 
     private void initResetDetectedBeaconsTimer() {
-        /*this.handler.postDelayed(new Runnable() {
+        this.handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                MainActivity.this.application.resetAlreadyDetectedBeacons();
-                MainActivity.this.handler.postDelayed(this, 5000);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        logToDisplay("Handler test");
+                        MainActivity.this.application.resetAlreadyDetectedBeacons();
+                    }
+                });
+                //MainActivity.this.application.resetAlreadyDetectedBeacons();
+                MainActivity.this.handler.postDelayed(this, 20000);
             }
-        }, 5000);*/
+        }, 10000);
     }
 
     private void logToDisplay(String message) {
