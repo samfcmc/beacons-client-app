@@ -58,13 +58,13 @@ public class MainActivity extends Activity implements BeaconConsumer {
         this.application.getClientWebStorage().init(new WebStorageCallback<Void>() {
             @Override
             public void onFailure(Throwable throwable) {
-                Toast.makeText(MainActivity.this, "Login failded", Toast.LENGTH_SHORT).show();
+                String message = getString(R.string.error_internet);
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onSuccess(Void response) {
                 MainActivity.this.beaconManager.bind(MainActivity.this);
-                //initResetDetectedBeaconsTimer();
             }
         });
     }
@@ -176,7 +176,7 @@ public class MainActivity extends Activity implements BeaconConsumer {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        String message = getResources().getString(R.string.error_internet);
+                        String message = getString(R.string.error_internet);
                         logToDisplay(message);
                         MainActivity.this.application.resetAlreadyDetectedBeacons();
                     }
