@@ -6,6 +6,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.RemoteException;
@@ -162,13 +164,6 @@ public class MainActivity extends Activity implements BeaconConsumer {
 
         final Beacon beacon = getNearestBeacon(beacons);
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                logToDisplay("Beacon detected");
-            }
-        });
-
         if(this.application.beaconWasAlreadyDetected(beacon)) {
             return;
         }
@@ -181,7 +176,8 @@ public class MainActivity extends Activity implements BeaconConsumer {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        logToDisplay("Error ocurred");
+                        String message = getResources().getString(R.string.error_internet);
+                        logToDisplay(message);
                         MainActivity.this.application.resetAlreadyDetectedBeacons();
                     }
                 });
@@ -194,44 +190,10 @@ public class MainActivity extends Activity implements BeaconConsumer {
                 }
             }
         });
-        //this.application.addDetectedBeacon(beacon);
-        restartRanging();
-    }
-
-    private void initResetDetectedBeaconsTimer() {
-        this.handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        logToDisplay("Handler test");
-                        MainActivity.this.application.resetAlreadyDetectedBeacons();
-                    }
-                });
-                //MainActivity.this.application.resetAlreadyDetectedBeacons();
-                MainActivity.this.handler.postDelayed(this, 20000);
-            }
-        }, 10000);
     }
 
     private void logToDisplay(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
-    }
-
-    private void restartRanging() {
-        try {
-            this.beaconManager.startRangingBeaconsInRegion(this.region);
-        } catch (RemoteException e) {
-
-        }
-    }
-
-    private void openBrowserActivity(String url) {
-        Intent intent = new Intent(this, ShowContentActivity.class);
-
-        intent.putExtra("url", url);
-        startActivity(intent);
     }
 
     private void showNotification(BeaconEntity beacon) {
@@ -243,6 +205,8 @@ public class MainActivity extends Activity implements BeaconConsumer {
         builder.setAutoCancel(true);
         long vibration[] = {0, 500, 200, 500, 200, 500};
         builder.setVibrate(vibration);
+        Uri notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        builder.setSound(notificationSound);
 
         Intent intent = new Intent(this, ShowContentActivity.class);
         intent.putExtra("url", beacon.getContent());

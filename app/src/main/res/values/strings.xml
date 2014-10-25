@@ -7,4 +7,6 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_show_content">ShowContentActivity</string>
 
+    <!-- Error -->
+    <string name="error_internet">An error occurred, make sure you have an Internet Connection</string>
 </resources>
